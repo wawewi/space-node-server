@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { nextTick } = require('node:process');
 
 const userSchema = mongoose.Schema(
   {
@@ -53,7 +52,7 @@ const userSchema = mongoose.Schema(
 userSchema.methods.generateAuthToken = async function() {
   const user = this;
   const token = jwt.sign({_id: user._id.toString()}, process.env.JWT_SECRET);
-  user.tokens = user.tokens.concat(token);
+  user.tokens = user.tokens.concat({token});
   await user.save();
   return token;
 }
@@ -71,7 +70,7 @@ userSchema.methods.toJSON = function() {
 //Static login method for reusability
 userSchema.statics.login = async(email,password)=> {
   //Check if user exists
-  const user = User.findOne({email});
+  const user = await User.findOne({email});
   if (!user) {
     throw new Error('Unable to login user');
   }
@@ -86,7 +85,7 @@ userSchema.statics.login = async(email,password)=> {
 }
 
 //Hashes passwords before user.save() is called - Registration, Login, Update
-userSchema.pre('save', async(next)=> {
+userSchema.pre('save', async function(next) {
   const user = this;
   if (user.isModified('password')) {
     user.password = await bcrypt.hash(user.password, 8);
@@ -95,7 +94,7 @@ userSchema.pre('save', async(next)=> {
 })
 
 //Remove documents that exist in other collections that belong to user
-userSchema.pre('remove', async(next)=> {
+userSchema.pre('remove', async function(next) {
   next();
 })
 
