@@ -33,6 +33,12 @@ const userSchema = mongoose.Schema(
         }
       }
     },
+    spaces: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+      }
+    ],
     tokens: [{
       token: {
         type: String,
